@@ -1,0 +1,51 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate app icon
+        run: |
+          pip install pillow
+          python build/make_icon.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows executables
+        run: npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrayingApp-Windows
+          path: |
+            dist/*.exe
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Praying App v1.0.0
+          files: dist/*.exe
+          body: |
+            **Praying App — Windows desktop**
+
+            - `PrayingApp-Portable-1.0.0.exe` — run directly, no installation needed
+            - `PrayingApp-Setup-1.0.0.exe` — one-click installer (adds Start Menu / Desktop shortcut)
+
+            Your prayer progress is saved automatically on your device.

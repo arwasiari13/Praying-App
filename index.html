@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Praying App</title>
+<style>
+  :root {
+    --bg: #0f1a17;
+    --card: #16241f;
+    --card-done: #1b3a2d;
+    --border: #24382f;
+    --gold: #d4af6a;
+    --green: #34c98e;
+    --text: #e9f2ec;
+    --muted: #8aa398;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(1200px 600px at 50% -200px, #1a2f26 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+    overflow-y: auto;
+  }
+  .wrap { max-width: 440px; margin: 0 auto; padding: 24px 20px 40px; }
+
+  header { text-align: center; margin-bottom: 18px; }
+  .bismillah {
+    font-family: "Traditional Arabic", "Segoe UI", serif;
+    font-size: 22px; color: var(--gold); margin-bottom: 6px;
+  }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: .5px; }
+  .dates { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .dates .hijri { color: var(--gold); }
+
+  .ring-box { display: flex; justify-content: center; margin: 18px 0 6px; }
+  .ring { position: relative; width: 150px; height: 150px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+  .ring .track { stroke: var(--border); }
+  .ring .bar {
+    stroke: var(--green);
+    stroke-dasharray: 408.4;
+    stroke-dashoffset: 408.4;
+    transition: stroke-dashoffset .6s ease, stroke .3s;
+  }
+  .ring.full .bar { stroke: var(--gold); }
+  .ring-label {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ring-label .count { font-size: 30px; font-weight: 700; }
+  .ring-label .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .congrats {
+    text-align: center; min-height: 22px; font-size: 14px;
+    color: var(--gold); margin-bottom: 10px; font-weight: 600;
+  }
+
+  .prayers { display: flex; flex-direction: column; gap: 10px; }
+  .prayer {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background .25s, border-color .25s, transform .1s;
+  }
+  .prayer:hover { transform: translateY(-1px); border-color: #33503f; }
+  .prayer.done { background: var(--card-done); border-color: var(--green); }
+  .check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: transparent; flex-shrink: 0;
+    transition: all .25s;
+  }
+  .prayer.done .check { background: var(--green); border-color: var(--green); color: #06281a; }
+  .p-names { flex: 1; }
+  .p-en { font-size: 16px; font-weight: 600; }
+  .p-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .p-ar {
+    font-family: "Traditional Arabic", "Segoe UI", serif;
+    font-size: 20px; color: var(--gold); opacity: .9;
+  }
+  .prayer.done .p-en { color: var(--green); }
+
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    margin-top: 20px;
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 8px; text-align: center;
+  }
+  .stat .v { font-size: 20px; font-weight: 700; color: var(--gold); }
+  .stat .k { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .history { margin-top: 22px; }
+  .history h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 10px; letter-spacing: .5px; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .day { text-align: center; }
+  .day .dot {
+    width: 100%; aspect-ratio: 1; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .day.today .dot { border-color: var(--gold); }
+  .day .lbl { font-size: 10px; color: var(--muted); }
+  .lv1 .dot { background: #1d3529; color: var(--text); }
+  .lv2 .dot { background: #1f4633; color: var(--text); }
+  .lv3 .dot { background: #1e5a3e; color: var(--text); }
+  .lv4 .dot { background: #21774f; color: #fff; }
+  .lv5 .dot { background: var(--green); color: #06281a; border-color: var(--green); }
+
+  footer { text-align: center; margin-top: 26px; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>Praying App</h1>
+    <div class="dates">
+      <span class="hijri" id="hijriDate"></span><br>
+      <span id="gregDate"></span>
+    </div>
+  </header>
+
+  <div class="ring-box">
+    <div class="ring" id="ring">
+      <svg width="150" height="150">
+        <circle class="track" cx="75" cy="75" r="65"></circle>
+        <circle class="bar" id="ringBar" cx="75" cy="75" r="65"></circle>
+      </svg>
+      <div class="ring-label">
+        <div class="count" id="ringCount">0 / 5</div>
+        <div class="sub">prayers today</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="congrats" id="congrats"></div>
+
+  <div class="prayers" id="prayers"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="v" id="streak">0</div><div class="k">Day streak</div></div>
+    <div class="stat"><div class="v" id="total">0</div><div class="k">Total prayers</div></div>
+    <div class="stat"><div class="v" id="perfect">0</div><div class="k">Perfect days</div></div>
+  </div>
+
+  <div class="history">
+    <h2>LAST 7 DAYS</h2>
+    <div class="week" id="week"></div>
+  </div>
+
+  <footer>Your progress is saved automatically on this device.</footer>
+</div>
+
+<script>
+const PRAYERS = [
+  { id: 'fajr',    en: 'Fajr',    ar: 'الفجر',   time: 'Dawn' },
+  { id: 'dhuhr',   en: 'Dhuhr',   ar: 'الظهر',   time: 'Noon' },
+  { id: 'asr',     en: 'Asr',     ar: 'العصر',   time: 'Afternoon' },
+  { id: 'maghrib', en: 'Maghrib', ar: 'المغرب',  time: 'Sunset' },
+  { id: 'isha',    en: 'Isha',    ar: 'العشاء',  time: 'Night' }
+];
+const KEY = 'praying-app-data-v1';
+const CIRC = 2 * Math.PI * 65;
+
+function todayKey(d = new Date()) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'),
+        day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || { days: {} }; }
+  catch { return { days: {} }; }
+}
+function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+let data = load();
+function dayRecord(key) {
+  if (!data.days[key]) data.days[key] = {};
+  return data.days[key];
+}
+function countDone(key) {
+  const rec = data.days[key] || {};
+  return PRAYERS.filter(p => rec[p.id]).length;
+}
+
+function computeStreak() {
+  let streak = 0;
+  const d = new Date();
+  // Today counts toward the streak only once complete; an unfinished today doesn't break it.
+  if (countDone(todayKey(d)) === 5) { streak++; }
+  d.setDate(d.getDate() - 1);
+  while (countDone(todayKey(d)) === 5) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function render() {
+  const tKey = todayKey();
+  const rec = dayRecord(tKey);
+
+  // prayer cards
+  const list = document.getElementById('prayers');
+  list.innerHTML = '';
+  PRAYERS.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'prayer' + (rec[p.id] ? ' done' : '');
+    div.innerHTML = `
+      <div class="check">✓</div>
+      <div class="p-names">
+        <div class="p-en">${p.en}</div>
+        <div class="p-time">${p.time}</div>
+      </div>
+      <div class="p-ar">${p.ar}</div>`;
+    div.onclick = () => {
+      rec[p.id] = !rec[p.id];
+      save(data);
+      render();
+    };
+    list.appendChild(div);
+  });
+
+  // ring
+  const done = countDone(tKey);
+  const ring = document.getElementById('ring');
+  ring.classList.toggle('full', done === 5);
+  document.getElementById('ringBar').style.strokeDashoffset = CIRC * (1 - done / 5);
+  document.getElementById('ringCount').textContent = `${done} / 5`;
+  document.getElementById('congrats').textContent =
+    done === 5 ? '🌙 Alhamdulillah! All prayers completed today' : '';
+
+  // stats
+  let total = 0, perfect = 0;
+  Object.keys(data.days).forEach(k => {
+    const c = countDone(k);
+    total += c;
+    if (c === 5) perfect++;
+  });
+  document.getElementById('streak').textContent = computeStreak();
+  document.getElementById('total').textContent = total;
+  document.getElementById('perfect').textContent = perfect;
+
+  // last 7 days
+  const week = document.getElementById('week');
+  week.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const k = todayKey(d);
+    const c = countDone(k);
+    const el = document.createElement('div');
+    el.className = 'day' + (c > 0 ? ` lv${c}` : '') + (i === 0 ? ' today' : '');
+    el.innerHTML = `<div class="dot">${c || ''}</div>
+      <div class="lbl">${d.toLocaleDateString('en', { weekday: 'short' })}</div>`;
+    week.appendChild(el);
+  }
+}
+
+function renderDates() {
+  const now = new Date();
+  document.getElementById('gregDate').textContent =
+    now.toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  try {
+    document.getElementById('hijriDate').textContent =
+      new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',
+        { year: 'numeric', month: 'long', day: 'numeric' }).format(now);
+  } catch { /* Hijri date unavailable on this system */ }
+}
+
+renderDates();
+render();
+
+// refresh at midnight so the new day starts fresh automatically
+let currentDay = todayKey();
+setInterval(() => {
+  if (todayKey() !== currentDay) {
+    currentDay = todayKey();
+    renderDates();
+    render();
+  }
+}, 30000);
+</script>
+</body>
+</html>
